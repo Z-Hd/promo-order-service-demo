@@ -13,17 +13,17 @@ def preview_order_pricing(payload: OrderPreviewRequest) -> dict:
     subtotal, total_quantity = _compute_subtotal(payload.items)
 
     # Bug 1: when items is empty, this triggers ZeroDivisionError.
-    average_unit_price = subtotal / total_quantity
+    average_unit_price = 0.0 if total_quantity == 0 else subtotal / total_quantity
 
     # Bug 2: when coupon is null, this triggers AttributeError on None.type.
-    coupon_type = payload.coupon.type
-    coupon_value = payload.coupon.value
-
     discount = 0.0
-    if coupon_type == "percent":
-        discount = subtotal * (coupon_value / 100)
-    elif coupon_type == "fixed":
-        discount = coupon_value
+    if payload.coupon is not None:
+        coupon_type = payload.coupon.type
+        coupon_value = payload.coupon.value
+        if coupon_type == "percent":
+            discount = subtotal * (coupon_value / 100)
+        elif coupon_type == "fixed":
+            discount = coupon_value
 
     payable_amount = subtotal - discount
     return {
